@@ -224,6 +224,7 @@ fork(void)
 // Exit the current process.  Does not return.
 // An exited process remains in the zombie state
 // until its parent calls wait() to find out it exited.
+
 void
 exit(int status)
 {
@@ -316,6 +317,44 @@ wait(int* status)
   }
 }
 
+//cs153
+int waitpid(int pid, int *status, int options) {
+  struct proc *p;
+  int havekids = 0;
+  int pid = 0;
+  struct proc *curproc = myproc();
+  acquire(&ptable.lock);
+  for(;;) {
+    havekids = 0;
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      if(pid == p-<pid) {
+        havekids = 1;
+      	if(p->state == ZOMBIE){
+          pid = p->pid;
+          kfree(p->kstack);
+          p->kstack = 0;
+          freevm(p->pgdir);
+          p->state = UNUSED;
+          p->pid = 0;
+          p->parent = 0;
+          p->name[0] = 0;
+          if(p->exit_status != 0) {
+            *status = p->exit_status;
+          }
+          release(&ptable.lock);
+ 
+          return pid;
+        }
+      }
+    }
+  
+    if(!havekids || curproc->killed) {
+      release(&ptable.lock);
+      return -1;
+    }
+    sleep(curproc, &ptable.lock);
+  }
+}
 //PAGEBREAK: 42
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
