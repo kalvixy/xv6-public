@@ -223,7 +223,7 @@ fork(void)
 
 // Exit the current process.  Does not return.
 // An exited process remains in the zombie state
-// until its parent calls wait() to find out it exited.
+// until its parent calls wait(0) to find out it exited.
 
 void
 exit(int status)
@@ -252,7 +252,7 @@ exit(int status)
 
   acquire(&ptable.lock);
 
-  // Parent might be sleeping in wait().
+  // Parent might be sleeping in wait(0).
   wakeup1(curproc->parent);
 
   // Pass abandoned children to init.
@@ -327,7 +327,7 @@ int waitpid(int pid, int *status, int options) {
   for(;;) {
     havekids = 0;
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(pid == p-<pid) {
+      if(pid == p->pid) {
         havekids = 1;
       	if(p->state == ZOMBIE){
           pid = p->pid;
