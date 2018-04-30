@@ -98,7 +98,7 @@ sys_uptime(void)
 }
 
 int
-waitpid(void)
+sys_waitpid(void)
 {
   int pid, options;
   int *status;
