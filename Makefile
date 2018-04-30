@@ -204,7 +204,7 @@ bochs : fs.img xv6.img
 	bochs -q
 
 # try to generate a unique GDB port
-GDBPORT = 11111
+GDBPORT = 81111
 # QEMU's gdb stub command line changed in 0.11
 QEMUGDB = $(shell if $(QEMU) -help | grep -q '^-gdb'; \
 	then echo "-gdb tcp::$(GDBPORT)"; \
