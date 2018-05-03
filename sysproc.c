@@ -109,3 +109,19 @@ sys_waitpid(void)
 
   return waitpid(pid, status, options);
 }
+
+
+
+int sys_prioritize(void)
+{
+int priority;
+
+if(argint(0, &priority) < 0) {
+ return -1;
+}
+
+proc->priority = priority;
+
+return 0;
+
+}

@@ -290,7 +290,7 @@ wait(int* status)
       if(p->state == ZOMBIE){
         // Found one.
         pid = p->pid;
-        if(status) {
+        if(status != 0) {
 	  *status = p->exit_status;
         }
         kfree(p->kstack);
@@ -338,7 +338,7 @@ int waitpid(int pid, int *status, int options) {
           p->pid = 0;
           p->parent = 0;
           p->name[0] = 0;
-          if(p->exit_status != 0) {
+          if(status != 0) {
             *status = p->exit_status;
           }
           release(&ptable.lock);
