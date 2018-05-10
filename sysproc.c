@@ -120,7 +120,7 @@ if(argint(0, &priority) < 0) {
  return -1;
 }
 
-proc->priority = priority;
+myproc()->priority = priority;
 
 return 0;
 
