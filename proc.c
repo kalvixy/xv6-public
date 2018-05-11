@@ -88,7 +88,7 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
-
+  p->priority = 10;
   release(&ptable.lock);
 
   // Allocate kernel stack.
@@ -149,6 +149,7 @@ userinit(void)
   acquire(&ptable.lock);
 
   p->state = RUNNABLE;
+  p->priority = 10;
 
   release(&ptable.lock);
 }
@@ -215,6 +216,7 @@ fork(void)
   acquire(&ptable.lock);
 
   np->state = RUNNABLE;
+  np->priority = 10;
 
   release(&ptable.lock);
 
@@ -304,6 +306,12 @@ wait(int* status)
         release(&ptable.lock);
         return pid;
       }
+      else {
+       if(curproc->priority < p->priority) {
+          p->priority = curproc->priority;
+          }
+     } 
+           
     }
 
     // No point waiting if we don't have any children.
@@ -345,8 +353,13 @@ int waitpid(int pid, int *status, int options) {
  
           return Pid;
         }
+       else {
+	 if(curproc->priority < p->priority) {
+            p->priority = curproc->priority;
       }
     }
+}
+}
   
     if(!havekids || curproc->killed) {
       release(&ptable.lock);
@@ -366,8 +379,9 @@ int waitpid(int pid, int *status, int options) {
 void
 scheduler(void)
 {
-  struct proc *p;
+  struct proc *p, *n;
   struct cpu *c = mycpu();
+  struct proc *otherProcess; 
   c->proc = 0;
   
   for(;;){
@@ -380,9 +394,20 @@ scheduler(void)
       if(p->state != RUNNABLE)
         continue;
 
+
+      otherProcess = p;
+         for(n = ptable.proc; n < &ptable.proc[NPROC]; n++) {
+             if(n->state != RUNNABLE)
+                continue;
+             if(n->priority <= otherProcess->priority)
+                 otherProcess = n;
+            }
+
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
+
+      p = otherProcess;
       c->proc = p;
       switchuvm(p);
       p->state = RUNNING;
@@ -575,4 +600,29 @@ procdump(void)
     }
     cprintf("\n");
   }
+}
+
+
+
+int setpriority(int priority) {
+   struct proc *curproc = myproc();
+
+   if(priority < 0) {
+      return curproc->priority;
+   }
+
+   return setpriority2(curproc, priority);
+}
+
+int setpriority2(struct proc* c, int priority) {
+    c->priority = priority;
+    if(c->priority < 0) {
+        c->priority = 0;
+    }
+    if(c->priority > 31) {
+        c->priority = 31;
+    }
+
+
+   return c->priority;
 }

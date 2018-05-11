@@ -112,7 +112,7 @@ sys_waitpid(void)
 
 
 
-int sys_prioritize(void)
+int sys_setpriority(void)
 {
 int priority;
 
@@ -120,8 +120,6 @@ if(argint(0, &priority) < 0) {
  return -1;
 }
 
-myproc()->priority = priority;
-
-return 0;
+return setpriority(priority);
 
 }
