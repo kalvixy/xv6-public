@@ -88,7 +88,7 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
-  p->priority = 10;
+
   release(&ptable.lock);
 
   // Allocate kernel stack.
@@ -149,7 +149,6 @@ userinit(void)
   acquire(&ptable.lock);
 
   p->state = RUNNABLE;
-  p->priority = 10;
 
   release(&ptable.lock);
 }
@@ -216,7 +215,6 @@ fork(void)
   acquire(&ptable.lock);
 
   np->state = RUNNABLE;
-  np->priority = 10;
 
   release(&ptable.lock);
 
@@ -225,16 +223,13 @@ fork(void)
 
 // Exit the current process.  Does not return.
 // An exited process remains in the zombie state
-// until its parent calls wait(0) to find out it exited.
-
+// until its parent calls wait() to find out it exited.
 void
-exit(int status)
+exit(void)
 {
   struct proc *curproc = myproc();
   struct proc *p;
   int fd;
-
-  curproc->exit_status = status;
 
   if(curproc == initproc)
     panic("init exiting");
@@ -254,7 +249,7 @@ exit(int status)
 
   acquire(&ptable.lock);
 
-  // Parent might be sleeping in wait(0).
+  // Parent might be sleeping in wait().
   wakeup1(curproc->parent);
 
   // Pass abandoned children to init.
@@ -275,7 +270,7 @@ exit(int status)
 // Wait for a child process to exit and return its pid.
 // Return -1 if this process has no children.
 int
-wait(int* status)
+wait(void)
 {
   struct proc *p;
   int havekids, pid;
@@ -292,9 +287,6 @@ wait(int* status)
       if(p->state == ZOMBIE){
         // Found one.
         pid = p->pid;
-        if(status != 0) {
-	  *status = p->exit_status;
-        }
         kfree(p->kstack);
         p->kstack = 0;
         freevm(p->pgdir);
@@ -306,12 +298,6 @@ wait(int* status)
         release(&ptable.lock);
         return pid;
       }
-      else {
-       if(curproc->priority < p->priority) {
-          p->priority = curproc->priority;
-          }
-     } 
-           
     }
 
     // No point waiting if we don't have any children.
@@ -325,49 +311,6 @@ wait(int* status)
   }
 }
 
-//cs153
-int waitpid(int pid, int *status, int options) {
-  struct proc *p;
-  int havekids = 0;
-  int Pid = 0;
-  struct proc *curproc = myproc();
-  acquire(&ptable.lock);
-  for(;;) {
-    havekids = 0;
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(pid == p->pid) {
-        havekids = 1;
-      	if(p->state == ZOMBIE){
-          Pid = p->pid;
-          kfree(p->kstack);
-          p->kstack = 0;
-          freevm(p->pgdir);
-          p->state = UNUSED;
-          p->pid = 0;
-          p->parent = 0;
-          p->name[0] = 0;
-          if(status != 0) {
-            *status = p->exit_status;
-          }
-          release(&ptable.lock);
- 
-          return Pid;
-        }
-       else {
-	 if(curproc->priority < p->priority) {
-            p->priority = curproc->priority;
-      }
-    }
-}
-}
-  
-    if(!havekids || curproc->killed) {
-      release(&ptable.lock);
-      return -1;
-    }
-    sleep(curproc, &ptable.lock);
-  }
-}
 //PAGEBREAK: 42
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
@@ -379,9 +322,8 @@ int waitpid(int pid, int *status, int options) {
 void
 scheduler(void)
 {
-  struct proc *p, *n;
+  struct proc *p;
   struct cpu *c = mycpu();
-  struct proc *otherProcess; 
   c->proc = 0;
   
   for(;;){
@@ -394,20 +336,9 @@ scheduler(void)
       if(p->state != RUNNABLE)
         continue;
 
-
-      otherProcess = p;
-         for(n = ptable.proc; n < &ptable.proc[NPROC]; n++) {
-             if(n->state != RUNNABLE)
-                continue;
-             if(n->priority <= otherProcess->priority)
-                 otherProcess = n;
-            }
-
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
-
-      p = otherProcess;
       c->proc = p;
       switchuvm(p);
       p->state = RUNNING;
@@ -600,29 +531,4 @@ procdump(void)
     }
     cprintf("\n");
   }
-}
-
-
-
-int setpriority(int priority) {
-   struct proc *curproc = myproc();
-
-   if(priority < 0) {
-      return curproc->priority;
-   }
-
-   return setpriority2(curproc, priority);
-}
-
-int setpriority2(struct proc* c, int priority) {
-    c->priority = priority;
-    if(c->priority < 0) {
-        c->priority = 0;
-    }
-    if(c->priority > 31) {
-        c->priority = 31;
-    }
-
-
-   return c->priority;
 }
