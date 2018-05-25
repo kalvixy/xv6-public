@@ -38,11 +38,11 @@ trap(struct trapframe *tf)
 {
   if(tf->trapno == T_SYSCALL){
     if(myproc()->killed)
-      exit(0);
+      exit();
     myproc()->tf = tf;
     syscall();
     if(myproc()->killed)
-      exit(0);
+      exit();
     return;
   }
 
@@ -77,7 +77,22 @@ trap(struct trapframe *tf)
             cpuid(), tf->cs, tf->eip);
     lapiceoi();
     break;
+      
+  case  T_PGFLT:
+    ; 
+    uint offendingAddr = rcr2();
+    uint sPages = myproc()->SoS + 1;
 
+    if (offendingAddr >= ((KERNBASE-1) - ((PGSIZE*sPages) + 1))) {
+        if (allocuvm(myproc()->pgdir, PGROUNDDOWN(offendingAddr), PGROUNDDOWN(offendingAddr) + 8) == 0){
+            cprintf("Shit hit the fan\n");
+            break;
+        }
+
+        myproc()->SoS += 1;
+        cprintf("Growing the stack\n");
+        break;
+}
   //PAGEBREAK: 13
   default:
     if(myproc() == 0 || (tf->cs&3) == 0){
@@ -98,7 +113,7 @@ trap(struct trapframe *tf)
   // (If it is still executing in the kernel, let it keep running
   // until it gets to the regular system call return.)
   if(myproc() && myproc()->killed && (tf->cs&3) == DPL_USER)
-    exit(0);
+    exit();
 
   // Force process to give up CPU on clock tick.
   // If interrupts were on while locks held, would need to check nlock.
@@ -108,5 +123,5 @@ trap(struct trapframe *tf)
 
   // Check if the process has been killed since we yielded
   if(myproc() && myproc()->killed && (tf->cs&3) == DPL_USER)
-    exit(0);
+    exit();
 }
