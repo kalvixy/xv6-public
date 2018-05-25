@@ -77,6 +77,21 @@ trap(struct trapframe *tf)
             cpuid(), tf->cs, tf->eip);
     lapiceoi();
     break;
+      
+  case  T_PGFLT:
+    ; 
+    uint offendingAddr = rcr2();
+    uint sPages = myproc()->SoS + 1;
+
+    if (offendingAddr >= ((KERNBASE-1) - ((PGSIZE*sPages) + 1))) {
+        if (allocuvm(myproc()->pgdir, PGROUNDDOWN(offendingAddr), PGROUNDDOWN(offendingAddr) + 8) == 0){
+            cprintf("Bad stuff happened\n");
+            break;
+        }
+
+        myproc()->stackPages += 1;
+        cprintf("Growing the stack\n");
+        break;
 
   //PAGEBREAK: 13
   default:
