@@ -85,11 +85,11 @@ trap(struct trapframe *tf)
 
     if (offendingAddr >= ((KERNBASE-1) - ((PGSIZE*sPages) + 1))) {
         if (allocuvm(myproc()->pgdir, PGROUNDDOWN(offendingAddr), PGROUNDDOWN(offendingAddr) + 8) == 0){
-            cprintf("Bad stuff happened\n");
+            cprintf("Shit hit the fan\n");
             break;
         }
 
-        myproc()->stackPages += 1;
+        myproc()->SoS += 1;
         cprintf("Growing the stack\n");
         break;
 
