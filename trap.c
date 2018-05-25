@@ -92,7 +92,7 @@ trap(struct trapframe *tf)
         myproc()->SoS += 1;
         cprintf("Growing the stack\n");
         break;
-
+}
   //PAGEBREAK: 13
   default:
     if(myproc() == 0 || (tf->cs&3) == 0){

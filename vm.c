@@ -338,7 +338,7 @@ copyuvm(pde_t *pgdir, uint sz, uint stack_size)
 
   uint page = KERNBASE-PGSIZE;
   //CS153 lab3 edits (todo3)
-  for(; stack_size >0; --stack_size) }
+  for(; stack_size >0; --stack_size) {
     if((pte = walkpgdir(pgdir, (void *) page, 0)) == 0)
       panic("copyuvm: pte should exist");
     if(!(*pte & PTE_P))
