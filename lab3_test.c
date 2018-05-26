@@ -29,6 +29,7 @@ int main(int argc, char *argv[]) {
 
     printf(1, "Test 2: Stack growth test.\n");
     // Write your own test
-    fibonacci(111);
+    fibonacci(75);
     exit();
+    return 0;
 }
