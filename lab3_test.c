@@ -28,8 +28,8 @@ int main(int argc, char *argv[]) {
     wait();
 
     printf(1, "Test 2: Stack growth test.\n");
-    // Write your own test
-    fibonacci(75);
+    // Write your own testp
+    fibonacci(5000000);
     exit();
     return 0;
 }
