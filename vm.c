@@ -313,7 +313,7 @@ clearpteu(pde_t *pgdir, char *uva)
 // Given a parent process's page table, create a copy
 // of it for a child.
 pde_t*
-copyuvm(pde_t *pgdir, uint sz, uint stack_size)
+copyuvm(pde_t *pgdir, uint sz)
 {
   pde_t *d;
   pte_t *pte;
@@ -335,7 +335,6 @@ copyuvm(pde_t *pgdir, uint sz, uint stack_size)
     if(mappages(d, (void*)i, PGSIZE, V2P(mem), flags) < 0)
       goto bad;
   }
-
   i = KERNBASE-PGSIZE;
   //CS153 lab3 edits (todo3)
   for(; stack_size >0; --stack_size) {
@@ -352,6 +351,7 @@ copyuvm(pde_t *pgdir, uint sz, uint stack_size)
       goto bad;
     i -= PGSIZE;
   }
+
   return d;
 
 bad:
